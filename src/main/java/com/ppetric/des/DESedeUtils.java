@@ -71,7 +71,7 @@ public class DESedeUtils {
         System.out.println(Hex.encodeHexString(encrypt));
 
         byte[] decrypt = cryptECB(false, pass, encrypt);
-        System.out.println(new String(decrypt, StandardCharsets.UTF_8));
+        System.out.println(new String(decrypt, StandardCharsets.UTF_8).replaceAll("\\u0000+$", ""));
     }
 
 }
