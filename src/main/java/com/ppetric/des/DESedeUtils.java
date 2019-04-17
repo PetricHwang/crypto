@@ -107,7 +107,6 @@ public class DESedeUtils {
         String keyHex = "9DEFDC769999625AA5961E2D91E09999";
         byte[] iv = Hex.decodeHex("0000000000000000");
 
-
         byte[] encResult = cryptCBC(true, Hex.decodeHex(keyHex), iv, "1".getBytes());
         System.out.println(Base64.encodeBase64String(encResult)); // RWvqowLoz78=
         byte[] decResult = cryptCBC(false, Hex.decodeHex(keyHex), iv, encResult);
