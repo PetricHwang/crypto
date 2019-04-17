@@ -1,5 +1,6 @@
 package com.ppetric.des;
 
+import com.ppetric.digests.SHAUtils;
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.binary.Hex;
@@ -13,9 +14,15 @@ import org.bouncycastle.crypto.modes.CBCBlockCipher;
 import org.bouncycastle.crypto.paddings.PaddedBufferedBlockCipher;
 import org.bouncycastle.crypto.params.DESedeParameters;
 import org.bouncycastle.crypto.params.ParametersWithIV;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
+import javax.crypto.Cipher;
+import javax.crypto.SecretKey;
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.DESedeKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
+import java.security.Security;
 
 /**
  * 3DES
@@ -23,20 +30,6 @@ import java.security.SecureRandom;
 public class DESedeUtils {
 
     private DESedeUtils() {
-    }
-
-    /**
-     * 生成密钥
-     *
-     * @return
-     */
-    public static byte[] generateKey() {
-        DESedeKeyGenerator keyGenerator = new DESedeKeyGenerator();
-        KeyGenerationParameters parameters = new KeyGenerationParameters(
-                new SecureRandom(),
-                DESedeParameters.DES_EDE_KEY_LENGTH * 8);
-        keyGenerator.init(parameters);
-        return keyGenerator.generateKey();
     }
 
     /**
@@ -55,11 +48,15 @@ public class DESedeUtils {
         byte[] out = new byte[cipher.getOutputSize(data.length)];
         int len = cipher.processBytes(data, 0, data.length, out, 0);
         try {
-            cipher.doFinal(out, len);
+            len += cipher.doFinal(out, len);
         } catch (InvalidCipherTextException e) {
             // TODO add log
+            e.printStackTrace();
         }
-        return out;
+
+        byte[] result = new byte[len];
+        System.arraycopy(out, 0, result, 0, result.length);
+        return result;
     }
 
     /**
@@ -82,35 +79,53 @@ public class DESedeUtils {
         byte[] out = new byte[cipher.getOutputSize(data.length)];
         int len = cipher.processBytes(data, 0, data.length, out, 0);
         try {
-            cipher.doFinal(out, len);
+            len += cipher.doFinal(out, len);
         } catch (InvalidCipherTextException e) {
             // TODO add log
+            e.printStackTrace();
         }
-        return out;
+
+        byte[] result = new byte[len];
+        System.arraycopy(out, 0, result, 0, result.length);
+        return result;
     }
 
-    public static void main(String[] args) throws DecoderException {
-        String key = Hex.encodeHexString(DESedeUtils.generateKey());
-        System.out.println(Base64.encodeBase64String(Hex.decodeHex(key)));
+    // TODO
+    public static byte[] cryptECB(byte[] key, byte[] data) {
+        Security.addProvider(new BouncyCastleProvider());
+        DESedeKeySpec desKeySpec = null;
+        try {
+            desKeySpec = new DESedeKeySpec(key);
+            SecretKeyFactory factory = SecretKeyFactory.getInstance("DESede");
+            SecretKey convertSecretKey = factory.generateSecret(desKeySpec);
+            Cipher cipher = Cipher.getInstance("DESede/ECB/PKCS5Padding");
+            cipher.init(Cipher.DECRYPT_MODE, convertSecretKey);
+            return cipher.doFinal(data);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
 
-        byte[] pass = Hex.decodeHex(key);
-        byte[] data = "快递单sdfsdfh1213世界sfsdf".getBytes(StandardCharsets.UTF_8);
-
-        byte[] encrypt = cryptECB(true, pass, data);
-        System.out.println(Base64.encodeBase64String(encrypt));
-        System.out.println(Hex.encodeHexString(encrypt));
-
-        byte[] decrypt = cryptECB(false, pass, encrypt);
-        System.out.println(new String(decrypt, StandardCharsets.UTF_8).replaceAll("\\u0000+$", ""));
-
+    public static void main(String[] args) throws Exception {
 
         String keyHex = "9DEFDC769999625AA5961E2D91E09999";
         byte[] iv = Hex.decodeHex("0000000000000000");
 
-        byte[] encResult = cryptCBC(true, Hex.decodeHex(keyHex), iv, "1".getBytes());
-        System.out.println(Base64.encodeBase64String(encResult)); // RWvqowLoz78=
-        byte[] decResult = cryptCBC(false, Hex.decodeHex(keyHex), iv, encResult);
-        System.out.println(new String(decResult)); // 1
+        String data = " 1sjdjl数据库砥砺奋进242347*#($#)%^$#^ad v ";
+        byte[] sha1 = SHAUtils.SHA1(data.getBytes());
+        System.out.println("sha1=" + Base64.encodeBase64String(sha1));
+
+        byte[] enc = cryptCBC(true, Hex.decodeHex(keyHex), iv, sha1);
+        System.out.println("sha1 enc=" + Base64.encodeBase64String(enc));
+        byte[] dec = cryptCBC(false, Hex.decodeHex(keyHex), iv, enc);
+        System.out.println("sha1=" + Base64.encodeBase64String(dec));
+
+        System.out.println("================");
+        byte[] encecb = cryptECB(true, Hex.decodeHex(keyHex), sha1);
+        System.out.println("sha1 enc=" + Base64.encodeBase64String(encecb));
+        byte[] dececb = cryptECB(false, Hex.decodeHex(keyHex), encecb);
+        System.out.println("sha1=" + Base64.encodeBase64String(dececb));
     }
 
 }
