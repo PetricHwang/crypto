@@ -1,7 +1,6 @@
 package com.ppetric.des;
 
 import com.ppetric.digests.SHAUtils;
-import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.binary.Hex;
 import org.bouncycastle.crypto.BufferedBlockCipher;
@@ -20,7 +19,6 @@ import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.DESedeKeySpec;
-import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.security.Security;
 
@@ -30,6 +28,20 @@ import java.security.Security;
 public class DESedeUtils {
 
     private DESedeUtils() {
+    }
+
+    /**
+     * 生成密钥
+     *
+     * @return
+     */
+    public static byte[] generateKey() {
+        DESedeKeyGenerator keyGenerator = new DESedeKeyGenerator();
+        KeyGenerationParameters parameters = new KeyGenerationParameters(
+                new SecureRandom(),
+                DESedeParameters.DES_EDE_KEY_LENGTH * 8);
+        keyGenerator.init(parameters);
+        return keyGenerator.generateKey();
     }
 
     /**
