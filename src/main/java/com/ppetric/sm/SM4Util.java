@@ -111,9 +111,19 @@ public class SM4Util {
 	}
 
 	public static void main(String[] args) throws DecoderException {
-		String hexData = "dd97e19b8551dc5148f4908f3dae0585";
+
+		String hexData = "黄佳鹏";
 		String hexKey = "11111111111111111111111111111111";
-		String s = Hex.encodeHexString(decodeSMS4(Hex.decodeHex(hexData), Hex.decodeHex(hexKey)));
+		byte[] enc = encodeSMS4(hexData.getBytes(), Hex.decodeHex(hexKey));
+		System.out.println(Hex.encodeHexString(enc));
+
+
+		String s = new String(decodeSMS4(enc, Hex.decodeHex(hexKey)));
+
 		System.out.println(s);
+
+
+
+
 	}
 }
